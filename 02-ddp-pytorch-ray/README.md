@@ -1,4 +1,4 @@
-# Distributed Training with Ray Train
+# Distributed Training with PyTorch and Ray Train
 
 Ray Train simplifies distributed PyTorch training by handling process group initialization, data distribution, and checkpoint management automatically.
 
@@ -6,10 +6,29 @@ Ray Train simplifies distributed PyTorch training by handling process group init
 
 | File | Description |
 |------|-------------|
+| `Ray_Train_Intro.ipynb` | Comprehensive tutorial notebook (start here) |
 | `train_ray_ddp.py` | Ray Train with PyTorch DataLoader |
 | `train_ray_ddp_with_ray_data.py` | Ray Train with Ray Data for distributed preprocessing |
 
-## Quick Start
+## Getting Started
+
+### Interactive Tutorial (Recommended)
+
+Start with the Jupyter notebook for a step-by-step learning experience:
+
+```bash
+jupyter notebook Ray_Train_Intro.ipynb
+```
+
+The notebook covers:
+1. **When to use Ray Train** - Use cases and benefits
+2. **Single GPU Training with PyTorch** - Baseline implementation
+3. **Distributed Training with Ray Train** - Migration from single GPU to multi-GPU
+4. **Integrating Ray Data** - Distributed data preprocessing
+5. **Fault Tolerance** - Checkpointing, automatic retries, and manual restoration
+6. **Ray Train in Production** - Best practices for deployment
+
+### Quick Start Scripts
 
 ```bash
 # Using PyTorch DataLoader

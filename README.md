@@ -75,6 +75,7 @@ vhol-ray-train/
 │   └── launch_multinode_ddp.sh       # Multi-node launch instructions
 │
 └── 02-ddp-pytorch-ray/               # Ray Train
+    ├── Ray_Train_Intro.ipynb         # Comprehensive tutorial notebook (start here)
     ├── train_ray_ddp.py              # Ray Train with PyTorch DataLoader
     └── train_ray_ddp_with_ray_data.py # Ray Train with Ray Data
 ```
@@ -98,7 +99,10 @@ torchrun --nproc_per_node=4 train_ddp.py --epochs 3
 ```bash
 cd 02-ddp-pytorch-ray
 
-# Single command scales to any number of GPUs
+# Start with the interactive tutorial notebook
+jupyter notebook Ray_Train_Intro.ipynb
+
+# Or run the scripts directly
 python train_ray_ddp.py --num-workers 8 --epochs 3
 
 # With Ray Data for distributed preprocessing
