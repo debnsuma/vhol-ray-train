@@ -1,0 +1,47 @@
+# Hidden files and directories
+.*
+!.gitignore
+
+# Data directories
+data/
+*/data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model checkpoints and outputs
+*.pt
+*.pth
+*.ckpt
+model_*.pt
+
+# Ray
+ray_results/
+
+# OS
+.DS_Store
+Thumbs.db

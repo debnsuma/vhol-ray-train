@@ -1,46 +1,69 @@
 # Vanilla PyTorch DDP Training
 
-Shows the complexity of distributed training WITHOUT Ray Train.
+This folder demonstrates distributed training using **PyTorch's DistributedDataParallel (DDP)** without any additional frameworks.
+
+## What is DistributedDataParallel?
+
+From the [PyTorch documentation](https://docs.pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html):
+
+> DistributedDataParallel (DDP) implements data parallelism at the module level. DDP uses collective communications in the `torch.distributed` package to synchronize gradients and buffers. Each process maintains its own copy of the model, and DDP handles gradient synchronization automatically during the backward pass.
+
+### How DDP Works
+
+1. **Each process has its own model copy** - Unlike DataParallel, DDP creates separate processes (not threads), each with its own Python interpreter
+2. **Data is partitioned across processes** - The `DistributedSampler` ensures each GPU processes a unique subset of the data
+3. **Gradients are synchronized automatically** - During `loss.backward()`, DDP uses NCCL to average gradients across all processes
+4. **All models stay in sync** - After each optimizer step, all model copies have identical weights
+
+### Key Concepts
+
+| Term | Description |
+|------|-------------|
+| **rank** | Global process identifier (0 to world_size-1) |
+| **local_rank** | Process identifier within a single node (0 to nproc_per_node-1) |
+| **world_size** | Total number of processes across all nodes |
+| **NCCL** | NVIDIA Collective Communications Library - optimized for GPU communication |
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `train_ddp.py` | DDP training script (~100 lines) |
-| `launch_multinode_ddp.sh` | Multi-node launcher |
-| `run_multinode_ddp.py` | Orchestration script |
+| `train_ddp.py` | DDP training script for ResNet18 on MNIST |
+| `launch_multinode_ddp.sh` | Prints instructions for multi-node launch |
 
-## Run Multi-Node Training
+## Single-Node Training
 
-```bash
-# Run on 2 nodes (8 GPUs total)
-./launch_multinode_ddp.sh 3 128 0.001
-# Args: epochs, batch_size, learning_rate
-```
-
-## What the Launcher Does
-
-1. Discovers GPU nodes dynamically
-2. Copies training script to shared storage
-3. Coordinates MASTER_ADDR across nodes
-4. Launches torchrun on each node simultaneously
-5. Waits for completion
-
-## Pain Points Demonstrated
-
-1. **Requires orchestration** - Can't just run a single command
-2. **Manual setup/cleanup** - `init_process_group()` / `destroy_process_group()`
-3. **DistributedSampler** - Must create manually
-4. **sampler.set_epoch()** - Must call every epoch or shuffling breaks
-5. **DDP wrapping** - Manual `DistributedDataParallel(model)`
-6. **Shared storage** - Script must be accessible from all nodes
-7. **No fault tolerance** - If one node fails, everything fails
-
-## Compare to Ray Train
+For training on a single machine with multiple GPUs:
 
 ```bash
-# Ray Train - ONE command, same result!
-python train_ray_ddp.py --num-workers 8 --epochs 3
+# Train on 4 GPUs
+torchrun --nproc_per_node=4 train_ddp.py --epochs 3 --batch-size 128 --lr 0.001
 ```
 
-No launcher script needed. No orchestration code. Just works.
+## Multi-Node Training
+
+For training across multiple machines, run `./launch_multinode_ddp.sh` to see the required setup and commands:
+
+```bash
+./launch_multinode_ddp.sh
+```
+
+This will print the `torchrun` commands needed for each node. The key parameters are:
+
+- `--nnodes`: Total number of machines
+- `--nproc_per_node`: GPUs per machine
+- `--node_rank`: Index of the current machine (0, 1, 2, ...)
+- `--master_addr`: IP address of node 0
+- `--master_port`: Port for inter-process communication
+
+## Manual Steps Required
+
+When using vanilla PyTorch DDP, you must handle:
+
+1. **Process group initialization** - Call `dist.init_process_group()` at start, `dist.destroy_process_group()` at end
+2. **Distributed sampler** - Create `DistributedSampler` and pass it to the DataLoader
+3. **Epoch shuffling** - Call `sampler.set_epoch(epoch)` each epoch for proper randomization
+4. **Model wrapping** - Wrap model with `DistributedDataParallel(model, device_ids=[local_rank])`
+5. **Multi-node coordination** - Launch `torchrun` on each node with correct parameters
+6. **Infrastructure** - Set up passwordless SSH, shared storage, and network connectivity
+
