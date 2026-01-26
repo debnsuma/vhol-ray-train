@@ -1,8 +1,4 @@
-# Distributed Training with PyTorch: DDP vs Ray Train
-
-A hands-on comparison of distributed training approaches: vanilla PyTorch DDP versus Ray Train.
-
-**GitHub Repository:** [https://github.com/debnsuma/vhol-ray-train](https://github.com/debnsuma/vhol-ray-train)
+# Getting started with Distributed Training with Ray
 
 ## What is Distributed Training?
 
