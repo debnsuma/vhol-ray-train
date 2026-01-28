@@ -102,6 +102,11 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=0.001)
     args = parser.parse_args()
 
+    # Step1: Setup for Distributed Training 
     setup()
+
+    # Step2: Start the training 
     train(args.epochs, args.batch_size, args.lr)
+
+    # Step3: Destroy the setup 
     cleanup()
