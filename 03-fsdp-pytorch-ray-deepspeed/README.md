@@ -27,69 +27,9 @@ This folder contains comprehensive tutorials on advanced distributed training te
 
 ## Environment Setup
 
-### Install `uv`
+**Note**: Environment setup should be completed at the repository root level. See the main [README.md](../README.md) for instructions on setting up the virtual environment and installing dependencies from `requirements.txt`.
 
-```bash
-# On Linux/macOS
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Verify installation
-uv --version
-```
-
-### Create Virtual Environment with `uv`
-
-```bash
-# Navigate to the tutorial directory
-cd 03-fsdp-pytorch-ray-deepspeed
-
-# Create a virtual environment with uv
-uv venv .venv
-
-# Activate the virtual environment
-# On Linux/macOS:
-source .venv/bin/activate
-# On Windows:
-# .venv\Scripts\activate
-
-# Install dependencies
-uv pip install torch torchvision ray[train] deepspeed matplotlib numpy ipykernel
-```
-
-### Configure Jupyter Kernel for VSCode/IDE
-
-To make the virtual environment available as a Jupyter kernel in VSCode or other IDEs:
-
-```bash
-# Activate your virtual environment first
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-
-# Register the kernel with Jupyter
-python -m ipykernel install --user --name=fsdp-deepspeed-env --display-name="Python (FSDP/DeepSpeed)"
-
-# Verify kernel is registered
-jupyter kernelspec list
-```
-
-**For VSCode:**
-1. Open VSCode in the project directory
-2. Open a `.ipynb` notebook
-3. Click the kernel selector in the top right of the notebook
-4. Select "Python (FSDP/DeepSpeed)" from the list
-5. If it doesn't appear, reload VSCode window (Cmd/Ctrl + Shift + P → "Reload Window")
-
-**For Jupyter Lab/Notebook:**
-1. Start Jupyter: `jupyter lab` or `jupyter notebook`
-2. Open a notebook
-3. Go to Kernel → Change Kernel → Select "Python (FSDP/DeepSpeed)"
-
-**For PyCharm:**
-1. File → Settings → Project → Python Interpreter
-2. Click gear icon → Add → Existing Environment
-3. Select `.venv/bin/python` (or `.venv\Scripts\python.exe` on Windows)
-4. In notebook, select the interpreter from the kernel dropdown
-
-### Verify Installation
+If you've already set up the environment at the root, you can use the same virtual environment for these tutorials. Simply activate it and select the "Python (Ray Train)" kernel in your IDE.
 
 ```python
 # Run this in a Python shell or notebook cell

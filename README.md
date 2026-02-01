@@ -11,6 +11,10 @@ Distributed training enables training deep learning models across multiple GPUs 
 
 This allows training larger batches and reduces training time proportionally to the number of GPUs.
 
+For **large models that don't fit in a single GPU's memory**, you can use:
+- **FSDP2 (Fully Sharded Data Parallel)**: PyTorch's native solution for model sharding across GPUs
+- **DeepSpeed ZeRO**: Microsoft's memory optimization technology that partitions optimizer states, gradients, and parameters
+
 ## PyTorch DistributedDataParallel (DDP)
 
 [DistributedDataParallel](https://docs.pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html) is PyTorch's native solution for distributed training:
@@ -70,29 +74,27 @@ This workshop is designed to run on [Anyscale](https://console.anyscale.com/), a
    # or
    .venv\Scripts\activate  # Windows
    
-   # Install dependencies
-   uv pip install torch torchvision ray[train] ipykernel
-   
-   # For advanced tutorials (03-fsdp-pytorch-ray-deepspeed), also install:
-   uv pip install deepspeed matplotlib numpy
+   # Install all dependencies from requirements.txt
+   uv pip install -r requirements.txt
    
    # Register Jupyter kernel for IDE integration
+   # Make sure the virtual environment is activated before running this
+   # Method 1: Register with user flag (recommended)
    python -m ipykernel install --user --name=ray-train-env --display-name="Python (Ray Train)"
-   ```
-
-   **IDE Integration (VSCode, PyCharm, Jupyter)**
    
-   After registering the kernel, you can use it in your IDE:
-   - **VSCode**: Open a notebook → Click kernel selector (top right) → Select "Python (Ray Train)"
-   - **Jupyter Lab/Notebook**: Kernel → Change Kernel → Select "Python (Ray Train)"
-   - **PyCharm**: File → Settings → Project → Python Interpreter → Select `.venv/bin/python`
-
-5. **Verify Ray cluster**
-   ```bash
-   ray status
+   # Alternative Method 2: If Method 1 doesn't work, use sys-prefix
+   # python -m ipykernel install --sys-prefix --name=ray-train-env --display-name="Python (Ray Train)"
+   
+   # Verify kernel is registered
+   jupyter kernelspec list
+   
+   # Verify Python path in kernel
+   python -c "import sys; print(f'Python: {sys.executable}')"
    ```
 
 ## Workshop Structure
+
+This workshop covers distributed training from basic DDP to advanced memory optimization techniques:
 
 ```
 vhol-ray-train/
@@ -155,14 +157,16 @@ jupyter notebook DeepSpeed_RayTrain_Tutorial.ipynb
 
 ## Comparison
 
-| Aspect | Vanilla PyTorch DDP | Ray Train |
-|--------|---------------------|-----------|
-| **Launch** | `torchrun` on each node | Single Python command |
-| **Process Groups** | Manual init/cleanup | Automatic |
-| **Distributed Sampler** | Must create manually | Handled by `prepare_data_loader()` |
-| **Multi-node Setup** | SSH, shared storage, coordination | Cluster handles it |
-| **Fault Tolerance** | None - any failure stops training | Built-in recovery |
-| **Checkpointing** | Manual implementation | Integrated with `ray.train.report()` |
+| Aspect | Vanilla PyTorch DDP | Ray Train (DDP) | FSDP2 + Ray Train | DeepSpeed + Ray Train |
+|--------|---------------------|-----------------|-------------------|----------------------|
+| **Launch** | `torchrun` on each node | Single Python command | Single Python command | Single Python command |
+| **Process Groups** | Manual init/cleanup | Automatic | Automatic | Automatic |
+| **Distributed Sampler** | Must create manually | Handled by `prepare_data_loader()` | Handled by `prepare_data_loader()` | Manual `DistributedSampler` |
+| **Multi-node Setup** | SSH, shared storage, coordination | Cluster handles it | Cluster handles it | Cluster handles it |
+| **Fault Tolerance** | None - any failure stops training | Built-in recovery | Built-in recovery | Built-in recovery |
+| **Checkpointing** | Manual implementation | Integrated with `ray.train.report()` | PyTorch DCP + Ray Train | DeepSpeed built-in + Ray Train |
+| **Memory Optimization** | None (full model per GPU) | None (full model per GPU) | Model sharding, CPU offload, mixed precision | ZeRO stages, CPU/NVMe offload |
+| **Best For** | Small-medium models | Small-medium models | Large models (PyTorch native) | Very large models (LLMs) |
 
 ## Further Reading
 

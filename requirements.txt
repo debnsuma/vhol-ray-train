@@ -1,0 +1,19 @@
+# Core PyTorch dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Ray Train for distributed training
+ray[train]>=2.40.0
+
+# DeepSpeed for advanced memory optimization (03-fsdp-pytorch-ray-deepspeed)
+deepspeed>=0.10.0
+
+# Data processing and visualization
+numpy>=1.21.0
+matplotlib>=3.5.0
+
+# Jupyter notebook support
+ipykernel>=6.0.0
+
+# Utilities
+tqdm>=4.60.0
