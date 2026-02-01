@@ -56,10 +56,36 @@ This workshop is designed to run on [Anyscale](https://console.anyscale.com/), a
    cd vhol-ray-train
    ```
 
-4. **Install dependencies**
+4. **Set up Python environment with `uv`**
+
    ```bash
-   pip install torch torchvision ray[train]
+   # Install uv (if not already installed)
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   
+   # Create virtual environment
+   uv venv .venv
+   
+   # Activate virtual environment
+   source .venv/bin/activate  # Linux/macOS
+   # or
+   .venv\Scripts\activate  # Windows
+   
+   # Install dependencies
+   uv pip install torch torchvision ray[train] ipykernel
+   
+   # For advanced tutorials (03-fsdp-pytorch-ray-deepspeed), also install:
+   uv pip install deepspeed matplotlib numpy
+   
+   # Register Jupyter kernel for IDE integration
+   python -m ipykernel install --user --name=ray-train-env --display-name="Python (Ray Train)"
    ```
+
+   **IDE Integration (VSCode, PyCharm, Jupyter)**
+   
+   After registering the kernel, you can use it in your IDE:
+   - **VSCode**: Open a notebook → Click kernel selector (top right) → Select "Python (Ray Train)"
+   - **Jupyter Lab/Notebook**: Kernel → Change Kernel → Select "Python (Ray Train)"
+   - **PyCharm**: File → Settings → Project → Python Interpreter → Select `.venv/bin/python`
 
 5. **Verify Ray cluster**
    ```bash
@@ -74,10 +100,14 @@ vhol-ray-train/
 │   ├── train_ddp.py                  # Training script with manual DDP setup
 │   └── launch_multinode_ddp.sh       # Multi-node launch instructions
 │
-└── 02-ddp-pytorch-ray/               # Ray Train
-    ├── Ray_Train_Intro.ipynb         # Comprehensive tutorial notebook (start here)
-    ├── train_ray_ddp.py              # Ray Train with PyTorch DataLoader
-    └── train_ray_ddp_with_ray_data.py # Ray Train with Ray Data
+├── 02-ddp-pytorch-ray/               # Ray Train (DDP)
+│   ├── Ray_Train_Intro.ipynb         # Comprehensive tutorial notebook (start here)
+│   ├── train_ray_ddp.py              # Ray Train with PyTorch DataLoader
+│   └── train_ray_ddp_with_ray_data.py # Ray Train with Ray Data
+│
+└── 03-fsdp-pytorch-ray-deepspeed/    # Advanced: FSDP2 & DeepSpeed
+    ├── FSDP2_RayTrain_Tutorial.ipynb # PyTorch FSDP2 with Ray Train
+    └── DeepSpeed_RayTrain_Tutorial.ipynb # DeepSpeed ZeRO with Ray Train
 ```
 
 ## Quick Start
@@ -94,7 +124,7 @@ torchrun --nproc_per_node=4 train_ddp.py --epochs 3
 ./launch_multinode_ddp.sh
 ```
 
-### Ray Train
+### Ray Train (DDP)
 
 ```bash
 cd 02-ddp-pytorch-ray
@@ -107,6 +137,20 @@ python train_ray_ddp.py --num-workers 8 --epochs 3
 
 # With Ray Data for distributed preprocessing
 python train_ray_ddp_with_ray_data.py --num-workers 8 --epochs 3
+```
+
+### Advanced: FSDP2 and DeepSpeed
+
+For training large models that don't fit in a single GPU's memory:
+
+```bash
+cd 03-fsdp-pytorch-ray-deepspeed
+
+# Start with FSDP2 tutorial (PyTorch native)
+jupyter notebook FSDP2_RayTrain_Tutorial.ipynb
+
+# Then try DeepSpeed (Microsoft's ZeRO technology)
+jupyter notebook DeepSpeed_RayTrain_Tutorial.ipynb
 ```
 
 ## Comparison
