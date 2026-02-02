@@ -394,8 +394,3 @@ After completing these tutorials:
 └── .venv/                            # Virtual environment (created by user)
 ```
 
----
-
-**Happy Training!** 🚀
-
-If you encounter any issues or have questions, please refer to the troubleshooting section or reach out to the Ray community.
