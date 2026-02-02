@@ -34,7 +34,18 @@ def setup():
 
 
 def cleanup():
-    """Clean up the distributed process group."""
+    """Clean up the distributed process group and free memory."""
+    import gc
+
+    # Clear CUDA memory
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+    # Clear Python garbage
+    gc.collect()
+
+    # Destroy process group
     dist.destroy_process_group()
 
 

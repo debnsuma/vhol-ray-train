@@ -378,6 +378,36 @@ After completing these tutorials:
 - [Canva's Stable Diffusion Training with Ray](https://www.anyscale.com/blog/scalable-and-cost-efficient-stable-diffusion-pre-training-with-ray)
 - [Fast Data Loading for ML Training with Ray Data](https://www.anyscale.com/blog/fast-flexible-scalable-data-loading-for-ml-training-with-ray-data)
 
+## Cluster Cleanup
+
+After running training, always clean up GPU and CPU memory from all worker nodes. Each notebook includes a cleanup section at the end.
+
+You can also run the cleanup script from the repository root:
+
+```bash
+python ../cleanup_cluster.py
+```
+
+Or call the cleanup function programmatically:
+
+```python
+import gc
+import torch
+import ray
+
+# Clear GPU memory
+if torch.cuda.is_available():
+    torch.cuda.empty_cache()
+    torch.cuda.synchronize()
+
+# Clear Python garbage
+gc.collect()
+
+# Shutdown Ray (optional, if ending session)
+if ray.is_initialized():
+    ray.shutdown()
+```
+
 ## File Structure
 
 ```

@@ -10,7 +10,7 @@ Benefits of Ray Data:
   - Works with any data source (Parquet, S3, images, etc.)
 
 Run:
-    python train_ray_ddp_with_ray_data.py --num-workers 4 --epochs 3
+    python train_ray_ddp_with_ray_data.py --num-workers 2 --epochs 3
 """
 
 import os
@@ -86,6 +86,19 @@ def train_func(config):
             )
 
 
+def cleanup():
+    """Clean up GPU and CPU memory from all workers."""
+    import gc
+
+    # Clear Python garbage
+    gc.collect()
+
+    # Clear CUDA memory if available
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", type=int, default=3)
@@ -118,6 +131,10 @@ def main():
 
     result = trainer.fit()
     print(f"Training complete! Final loss: {result.metrics['loss']:.4f}")
+
+    # Cleanup
+    cleanup()
+    print("Cleanup complete.")
 
 
 if __name__ == "__main__":

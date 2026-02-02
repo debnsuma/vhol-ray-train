@@ -1,4 +1,4 @@
-# Getting started with Distributed Training with Ray
+# Getting started with Distributed Training with Ray, PyTorch and DeepSpeed
 
 ## What is Distributed Training?
 
@@ -60,36 +60,13 @@ This workshop is designed to run on [Anyscale](https://console.anyscale.com/), a
    cd vhol-ray-train
    ```
 
-4. **Set up Python environment with `uv`**
+4. **Set up**
 
    ```bash
-   # Install uv (if not already installed)
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   
-   # Create virtual environment
-   uv venv .venv
-   
-   # Activate virtual environment
-   source .venv/bin/activate  # Linux/macOS
-   # or
-   .venv\Scripts\activate  # Windows
    
    # Install all dependencies from requirements.txt
-   uv pip install -r requirements.txt
+   pip install -r requirements.txt
    
-   # Register Jupyter kernel for IDE integration
-   # Make sure the virtual environment is activated before running this
-   # Method 1: Register with user flag (recommended)
-   python -m ipykernel install --user --name=ray-train-env --display-name="Python (Ray Train)"
-   
-   # Alternative Method 2: If Method 1 doesn't work, use sys-prefix
-   # python -m ipykernel install --sys-prefix --name=ray-train-env --display-name="Python (Ray Train)"
-   
-   # Verify kernel is registered
-   jupyter kernelspec list
-   
-   # Verify Python path in kernel
-   python -c "import sys; print(f'Python: {sys.executable}')"
    ```
 
 ## Workshop Structure
@@ -135,13 +112,13 @@ cd 02-ddp-pytorch-ray
 jupyter notebook Ray_Train_Intro.ipynb
 
 # Or run the scripts directly
-python train_ray_ddp.py --num-workers 8 --epochs 3
+python train_ray_ddp.py --num-workers 2 --epochs 3
 
 # With Ray Data for distributed preprocessing
-python train_ray_ddp_with_ray_data.py --num-workers 8 --epochs 3
+python train_ray_ddp_with_ray_data.py --num-workers 2 --epochs 3
 ```
 
-### Advanced: FSDP2 and DeepSpeed
+### FSDP2 and DeepSpeed
 
 For training large models that don't fit in a single GPU's memory:
 
@@ -155,18 +132,23 @@ jupyter notebook FSDP2_RayTrain_Tutorial.ipynb
 jupyter notebook DeepSpeed_RayTrain_Tutorial.ipynb
 ```
 
-## Comparison
+## Cluster Cleanup
 
-| Aspect | Vanilla PyTorch DDP | Ray Train (DDP) | FSDP2 + Ray Train | DeepSpeed + Ray Train |
-|--------|---------------------|-----------------|-------------------|----------------------|
-| **Launch** | `torchrun` on each node | Single Python command | Single Python command | Single Python command |
-| **Process Groups** | Manual init/cleanup | Automatic | Automatic | Automatic |
-| **Distributed Sampler** | Must create manually | Handled by `prepare_data_loader()` | Handled by `prepare_data_loader()` | Manual `DistributedSampler` |
-| **Multi-node Setup** | SSH, shared storage, coordination | Cluster handles it | Cluster handles it | Cluster handles it |
-| **Fault Tolerance** | None - any failure stops training | Built-in recovery | Built-in recovery | Built-in recovery |
-| **Checkpointing** | Manual implementation | Integrated with `ray.train.report()` | PyTorch DCP + Ray Train | DeepSpeed built-in + Ray Train |
-| **Memory Optimization** | None (full model per GPU) | None (full model per GPU) | Model sharding, CPU offload, mixed precision | ZeRO stages, CPU/NVMe offload |
-| **Best For** | Small-medium models | Small-medium models | Large models (PyTorch native) | Very large models (LLMs) |
+After training runs, you should clean up GPU and CPU memory from all worker nodes. This repository includes a cleanup script for this purpose:
+
+```bash
+# Clean up all worker nodes
+python cleanup_cluster.py
+```
+
+You can also call the cleanup function programmatically:
+
+```python
+from cleanup_cluster import cleanup_cluster
+cleanup_cluster()
+```
+
+Each notebook in this repository includes a cleanup section at the end. It is recommended to run the cleanup after each training session to free resources.
 
 ## Further Reading
 
