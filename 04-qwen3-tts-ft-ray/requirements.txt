@@ -1,0 +1,31 @@
+# Qwen3-TTS Voice Cloning with Ray Distributed Training
+# =====================================================
+
+# Core Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Ray for distributed computing
+ray[train,data]>=2.40.0
+
+# Qwen3-TTS
+qwen-tts>=0.0.5
+
+# Audio processing
+soundfile>=0.12.0
+librosa>=0.10.0
+pydub>=0.25.1
+
+# Speech-to-text for transcription
+openai-whisper>=20231117
+faster-whisper>=1.0.0
+
+# Utilities
+numpy>=1.21.0
+pandas>=1.5.0
+tqdm>=4.60.0
+pyyaml>=6.0
+
+# Optional: FlashAttention for memory efficiency (requires CUDA)
+# pip install flash-attn --no-build-isolation

@@ -1,0 +1,196 @@
+"""
+Configuration for Qwen3-TTS Voice Cloning Pipeline
+
+This file centralizes all configuration parameters for:
+- Data processing
+- Model training
+- Inference
+"""
+
+import os
+from pathlib import Path
+from dataclasses import dataclass, field
+from typing import Optional
+
+# Project paths
+PROJECT_ROOT = Path(__file__).parent.parent
+
+# Shared storage for Ray cluster (use this for distributed processing)
+CLUSTER_STORAGE = Path("/mnt/cluster_storage")
+RAY_STORAGE_PATH = CLUSTER_STORAGE / "qwen3-tts-training"
+
+# Data directory - use shared storage for distributed access
+DATA_DIR = RAY_STORAGE_PATH / "data"
+
+# Output directories - use shared storage for distributed access
+OUTPUT_DIR = RAY_STORAGE_PATH / "output"
+PROCESSED_DIR = OUTPUT_DIR / "processed"
+CHECKPOINT_DIR = OUTPUT_DIR / "checkpoints"
+
+
+@dataclass
+class DataConfig:
+    """Configuration for data processing"""
+    # Input data
+    raw_audio_dir: Path = DATA_DIR
+    audio_extensions: tuple = (".wav",)  # WAV only (MP4/MP3 converted during setup)
+
+    # Audio processing
+    target_sample_rate: int = 16000  # Whisper expects 16kHz
+    output_sample_rate: int = 24000  # Qwen3-TTS expects 24kHz
+    max_segment_duration: float = 15.0  # Max seconds per segment
+    min_segment_duration: float = 1.0   # Min seconds per segment
+
+    # Output
+    processed_dir: Path = PROCESSED_DIR
+    train_jsonl: str = "train.jsonl"
+
+    # Whisper transcription
+    whisper_model: str = "base"  # tiny, base, small, medium, large
+    whisper_language: str = "en"
+
+
+@dataclass
+class ModelConfig:
+    """Configuration for Qwen3-TTS model"""
+    # Base model for fine-tuning
+    base_model: str = "Qwen/Qwen3-TTS-12Hz-1.7B-Base"
+    tokenizer_model: str = "Qwen/Qwen3-TTS-Tokenizer-12Hz"
+
+    # For inference comparison
+    custom_voice_model: str = "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice"
+
+    # Model precision
+    dtype: str = "bfloat16"
+    use_flash_attention: bool = True
+
+
+@dataclass
+class TrainConfig:
+    """Configuration for distributed training"""
+    # Training hyperparameters
+    batch_size: int = 2
+    learning_rate: float = 2e-5
+    num_epochs: int = 3
+    warmup_ratio: float = 0.1
+    weight_decay: float = 0.01
+    gradient_accumulation_steps: int = 4
+
+    # FSDP configuration
+    sharding_strategy: str = "FULL_SHARD"  # FULL_SHARD, SHARD_GRAD_OP, NO_SHARD
+    cpu_offload: bool = False  # Enable for memory savings
+    mixed_precision: bool = True
+
+    # Ray Train configuration
+    num_workers: int = 4  # Number of GPU workers
+    use_gpu: bool = True
+
+    # Checkpointing
+    checkpoint_dir: Path = CHECKPOINT_DIR
+    save_every_n_epochs: int = 1
+
+    # Speaker name for fine-tuning
+    speaker_name: str = "custom_speaker"
+
+    # Storage
+    storage_path: Path = RAY_STORAGE_PATH
+
+
+@dataclass
+class InferenceConfig:
+    """Configuration for inference and testing"""
+    # Test text for comparison
+    test_texts: list = field(default_factory=lambda: [
+        "Hello, this is a test of the voice cloning system. "
+        "I am speaking in a natural and clear voice. "
+        "The weather today is beautiful, and I hope you are having a wonderful day. "
+        "This technology allows us to create personalized speech synthesis models.",
+    ])
+
+    # Output settings
+    output_dir: Path = OUTPUT_DIR / "inference"
+
+    # Generation parameters
+    max_new_tokens: int = 2048
+    top_p: float = 0.9
+    temperature: float = 1.0
+
+
+def get_config():
+    """Get all configuration objects"""
+    return {
+        "data": DataConfig(),
+        "model": ModelConfig(),
+        "train": TrainConfig(),
+        "inference": InferenceConfig(),
+    }
+
+
+def setup_directories():
+    """Create necessary directories and copy/convert data files to shared storage"""
+    import shutil
+    import subprocess
+
+    # Create all necessary directories
+    dirs = [
+        DATA_DIR,
+        OUTPUT_DIR,
+        PROCESSED_DIR,
+        CHECKPOINT_DIR,
+        OUTPUT_DIR / "inference",
+        RAY_STORAGE_PATH / "final_model",
+    ]
+    for d in dirs:
+        d.mkdir(parents=True, exist_ok=True)
+
+    # Copy/convert audio files from project data directory to shared storage
+    # This ensures data is available on all cluster nodes
+    local_data_dir = PROJECT_ROOT / "data"
+    if local_data_dir.exists():
+        audio_files = list(local_data_dir.glob("*.mp4")) + \
+                      list(local_data_dir.glob("*.wav")) + \
+                      list(local_data_dir.glob("*.mp3"))
+
+        if audio_files:
+            print(f"Setting up {len(audio_files)} audio files in shared storage...")
+            for audio_file in audio_files:
+                # For MP4/MP3 files, convert to WAV
+                if audio_file.suffix.lower() in [".mp4", ".mp3"]:
+                    dest_file = DATA_DIR / (audio_file.stem + ".wav")
+                    if not dest_file.exists():
+                        print(f"  Converting: {audio_file.name} -> {dest_file.name}")
+                        try:
+                            subprocess.run([
+                                "ffmpeg", "-i", str(audio_file),
+                                "-vn",  # No video
+                                "-acodec", "pcm_s16le",  # PCM 16-bit
+                                "-ar", "24000",  # 24kHz sample rate
+                                "-ac", "1",  # Mono
+                                "-y",  # Overwrite
+                                str(dest_file)
+                            ], check=True, capture_output=True)
+                        except subprocess.CalledProcessError as e:
+                            print(f"    Error converting {audio_file.name}: {e.stderr.decode()[:200]}")
+                    else:
+                        print(f"  Already exists: {dest_file.name}")
+                else:
+                    # WAV files - just copy
+                    dest_file = DATA_DIR / audio_file.name
+                    if not dest_file.exists():
+                        shutil.copy2(audio_file, dest_file)
+                        print(f"  Copied: {audio_file.name}")
+                    else:
+                        print(f"  Already exists: {audio_file.name}")
+
+    return dirs
+
+
+if __name__ == "__main__":
+    # Test configuration
+    config = get_config()
+    setup_directories()
+
+    print("Configuration loaded successfully!")
+    print(f"Data directory: {config['data'].raw_audio_dir}")
+    print(f"Output directory: {OUTPUT_DIR}")
+    print(f"Ray storage: {RAY_STORAGE_PATH}")

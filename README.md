@@ -71,7 +71,7 @@ This workshop is designed to run on [Anyscale](https://console.anyscale.com/), a
 
 ## Workshop Structure
 
-This workshop covers distributed training from basic DDP to advanced memory optimization techniques:
+This workshop covers distributed training from basic DDP to advanced memory optimization techniques, culminating in a real-world voice cloning project:
 
 ```
 vhol-ray-train/
@@ -84,9 +84,20 @@ vhol-ray-train/
 │   ├── train_ray_ddp.py              # Ray Train with PyTorch DataLoader
 │   └── train_ray_ddp_with_ray_data.py # Ray Train with Ray Data
 │
-└── 03-fsdp-pytorch-ray-deepspeed/    # Advanced: FSDP2 & DeepSpeed
-    ├── FSDP2_RayTrain_Tutorial.ipynb # PyTorch FSDP2 with Ray Train
-    └── DeepSpeed_RayTrain_Tutorial.ipynb # DeepSpeed ZeRO with Ray Train
+├── 03-fsdp-pytorch-ray-deepspeed/    # Advanced: FSDP2 & DeepSpeed
+│   ├── FSDP2_RayTrain_Tutorial.ipynb # PyTorch FSDP2 with Ray Train
+│   └── DeepSpeed_RayTrain_Tutorial.ipynb # DeepSpeed ZeRO with Ray Train
+│
+└── 04-qwen3-tts-ft-ray/              # Real-World Project: Voice Cloning
+    ├── README.md                     # Detailed project documentation
+    ├── src/
+    │   ├── data_processing.py        # Ray Data for audio processing
+    │   ├── prepare_data.py           # Audio code extraction
+    │   ├── train_qwen_tts.py         # SFT with Ray Train
+    │   └── inference.py              # Base vs fine-tuned comparison
+    └── scripts/
+        ├── run_pipeline.py           # End-to-end pipeline runner
+        └── zero_shot_clone.py        # Standalone zero-shot voice cloning
 ```
 
 ## Quick Start
@@ -132,23 +143,18 @@ jupyter notebook FSDP2_RayTrain_Tutorial.ipynb
 jupyter notebook DeepSpeed_RayTrain_Tutorial.ipynb
 ```
 
-## Cluster Cleanup
+## Comparison
 
-After training runs, you should clean up GPU and CPU memory from all worker nodes. This repository includes a cleanup script for this purpose:
-
-```bash
-# Clean up all worker nodes
-python cleanup_cluster.py
-```
-
-You can also call the cleanup function programmatically:
-
-```python
-from cleanup_cluster import cleanup_cluster
-cleanup_cluster()
-```
-
-Each notebook in this repository includes a cleanup section at the end. It is recommended to run the cleanup after each training session to free resources.
+| Aspect | Vanilla PyTorch DDP | Ray Train (DDP) | FSDP2 + Ray Train | DeepSpeed + Ray Train |
+|--------|---------------------|-----------------|-------------------|----------------------|
+| **Launch** | `torchrun` on each node | Single Python command | Single Python command | Single Python command |
+| **Process Groups** | Manual init/cleanup | Automatic | Automatic | Automatic |
+| **Distributed Sampler** | Must create manually | Handled by `prepare_data_loader()` | Handled by `prepare_data_loader()` | Manual `DistributedSampler` |
+| **Multi-node Setup** | SSH, shared storage, coordination | Cluster handles it | Cluster handles it | Cluster handles it |
+| **Fault Tolerance** | None - any failure stops training | Built-in recovery | Built-in recovery | Built-in recovery |
+| **Checkpointing** | Manual implementation | Integrated with `ray.train.report()` | PyTorch DCP + Ray Train | DeepSpeed built-in + Ray Train |
+| **Memory Optimization** | None (full model per GPU) | None (full model per GPU) | Model sharding, CPU offload, mixed precision | ZeRO stages, CPU/NVMe offload |
+| **Best For** | Small-medium models | Small-medium models | Large models (PyTorch native) | Very large models (LLMs) |
 
 ## Further Reading
 
