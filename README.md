@@ -1,5 +1,7 @@
 # Getting started with Distributed Training with Ray, PyTorch and DeepSpeed
 
+## What is Distributed Training?
+
 Distributed training enables training deep learning models across multiple GPUs or machines by parallelizing computation. The most common approach is **data parallelism**, where:
 
 - Each GPU holds a complete copy of the model
@@ -139,6 +141,23 @@ jupyter notebook FSDP2_RayTrain_Tutorial.ipynb
 
 # Then try DeepSpeed (Microsoft's ZeRO technology)
 jupyter notebook DeepSpeed_RayTrain_Tutorial.ipynb
+```
+
+### Voice Cloning with Qwen3-TTS
+
+Apply everything you've learned to fine-tune a 1.7B parameter TTS model:
+
+```bash
+cd 04-qwen3-tts-ft-ray
+
+# Run the complete pipeline
+python scripts/run_pipeline.py --all --num-epochs 10
+
+# Or zero-shot voice cloning (no fine-tuning needed)
+python scripts/zero_shot_clone.py \
+    --ref-audio samples/voice.wav \
+    --text "Hello, this is my cloned voice." \
+    --output output.wav
 ```
 
 ## Comparison

@@ -329,7 +329,7 @@ This step runs on GPU workers via Ray and adds `audio_codes` to each sample.
 
 **Training Configuration**:
 ```python
-from src.train_qwen_tts.py import run_qwen_tts_training, QwenTTSConfig
+from src.train_qwen_tts import run_qwen_tts_training, QwenTTSConfig
 
 config = QwenTTSConfig(
     model_path="Qwen/Qwen3-TTS-12Hz-1.7B-Base",
