@@ -1,7 +1,5 @@
 # Getting started with Distributed Training with Ray, PyTorch and DeepSpeed
 
-## What is Distributed Training?
-
 Distributed training enables training deep learning models across multiple GPUs or machines by parallelizing computation. The most common approach is **data parallelism**, where:
 
 - Each GPU holds a complete copy of the model
