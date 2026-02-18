@@ -1,6 +1,9 @@
 # Hidden files and directories
 .*
 !.gitignore
+*/FashionMNIST/
+*/DeepSpeed_RayTrain_Tutorial_LIVE.ipynb
+*/FSDP2_RayTrain_Tutorial_LIVE.ipynb
 
 # Data directories
 data/
