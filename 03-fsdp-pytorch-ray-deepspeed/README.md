@@ -19,11 +19,7 @@ This folder contains comprehensive tutorials on advanced distributed training te
 | `FSDP2_RayTrain_Tutorial.ipynb` | Complete guide to PyTorch FSDP2 with Ray Train |
 | `DeepSpeed_RayTrain_Tutorial.ipynb` | DeepSpeed ZeRO integration with Ray Train |
 
-## Flow
 
-1. Start with `FSDP2_RayTrain_Tutorial.ipynb` to learn PyTorch's native FSDP2 approach
-2. Continue with `DeepSpeed_RayTrain_Tutorial.ipynb` to learn DeepSpeed's ZeRO technology
-3. Compare both approaches to understand when to use each
 
 ## Environment Setup
 
@@ -31,20 +27,9 @@ This folder contains comprehensive tutorials on advanced distributed training te
 
 If you've already set up the environment at the root, you can use the same virtual environment for these tutorials. Simply activate it and select the "Python (Ray Train)" kernel in your IDE.
 
-```python
-# Run this in a Python shell or notebook cell
-import torch
-import ray
-import deepspeed
-
-print(f"PyTorch version: {torch.__version__}")
-print(f"Ray version: {ray.__version__}")
-print(f"DeepSpeed version: {deepspeed.__version__}")
-print(f"CUDA available: {torch.cuda.is_available()}")
-print(f"CUDA version: {torch.version.cuda if torch.cuda.is_available() else 'N/A'}")
-```
-
 ## Quick Start
+
+**For a 1-hour workshop:** Run `FSDP2_RayTrain_Tutorial_LIVE.ipynb` then `DeepSpeed_RayTrain_Tutorial_LIVE.ipynb` (last ~10 min). Both use the same ViT-on-FashionMNIST setup; the DeepSpeed LIVE notebook highlights what changes compared to FSDP.
 
 ### 1. Start with FSDP2
 
@@ -84,70 +69,6 @@ jupyter notebook DeepSpeed_RayTrain_Tutorial.ipynb
 - Built-in checkpointing methods
 - Comparison with FSDP2
 
-## Architecture Overview
-
-### FSDP2 Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    FSDP2 Training Flow                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Worker 0          Worker 1          Worker 2          Worker 3 │
-│  ┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐ │
-│  │ Model   │      │ Model   │      │ Model   │      │ Model   │ │
-│  │ Shard 0 │      │ Shard 1 │      │ Shard 2 │      │ Shard 3 │ │
-│  │         │      │         │      │         │      │         │ │
-│  │ Forward │ ────│ Forward │ ────│ Forward │ ────│ Forward │ │
-│  │         │      │         │      │         │      │         │ │
-│  │ All-    │      │ All-    │      │ All-    │      │ All-    │ │
-│  │ Gather  │◄─────┤ Gather  │◄─────┤ Gather  │◄─────┤ Gather  │ │
-│  │         │      │         │      │         │      │         │ │
-│  │ Backward│      │ Backward│      │ Backward│      │ Backward│ │
-│  │         │      │         │      │         │      │         │ │
-│  │ Reduce  │ ────│ Reduce  │ ────│ Reduce  │ ────│ Reduce  │ │
-│  │ Scatter │      │ Scatter │      │ Scatter │      │ Scatter │ │
-│  └─────────┘      └─────────┘      └─────────┘      └─────────┘ │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Key Concepts:**
-- **Sharding**: Each worker holds a fraction of model parameters
-- **All-Gather**: Collect full parameters for forward/backward pass
-- **Reduce-Scatter**: Distribute gradients and update sharded parameters
-- **Resharding**: Option to free gathered parameters after forward pass
-
-### DeepSpeed ZeRO Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  DeepSpeed ZeRO Stages                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ZeRO-1: Partition Optimizer States                          │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐      │
-│  │ Params  │  │ Params  │  │ Params  │  │ Params  │      │
-│  │ Grads   │  │ Grads   │  │ Grads   │  │ Grads   │      │
-│  │ Opt[0]  │  │ Opt[1]  │  │ Opt[2]  │  │ Opt[3]  │      │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘      │
-│                                                              │
-│  ZeRO-2: Partition Optimizer States + Gradients             │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐      │
-│  │ Params  │  │ Params  │  │ Params  │  │ Params  │      │
-│  │ Grad[0] │  │ Grad[1] │  │ Grad[2] │  │ Grad[3] │      │
-│  │ Opt[0]  │  │ Opt[1]  │  │ Opt[2]  │  │ Opt[3]  │      │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘      │
-│                                                              │
-│  ZeRO-3: Partition Everything                                │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐      │
-│  │Param[0] │  │Param[1] │  │Param[2] │  │Param[3] │      │
-│  │Grad[0]  │  │Grad[1]  │  │Grad[2]  │  │Grad[3]  │      │
-│  │ Opt[0]  │  │ Opt[1]  │  │ Opt[2]  │  │ Opt[3]  │      │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘      │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
 
 ## Memory Optimization Techniques
 
@@ -340,6 +261,11 @@ torch.cuda.memory._dump_snapshot(snapshot_path)
 - **Solution**: Ensure all workers have compatible CUDA versions
 - **Verify**: `torch.cuda.is_available()` returns `True` on all workers
 
+**5. DeepSpeed: `FileNotFoundError: .../nvcc` on workers**
+
+- **Cause**: Worker nodes have CUDA runtime but not the full toolkit (no `nvcc` binary). DeepSpeed’s import can trigger an nvcc check.
+- **Solution**: Use the `_setup_deepspeed_env()` helper at the start of `train_func` (as in `DeepSpeed_RayTrain_Tutorial_LIVE.ipynb` and the full DeepSpeed tutorial). Set `DS_BUILD_OPS=0` and `DS_SKIP_CUDA_CHECK=1` in `worker_runtime_env` for the trainer.
+
 ### Getting Help
 
 - **Ray Train Documentation**: https://docs.ray.io/en/latest/train/
@@ -412,15 +338,18 @@ if ray.is_initialized():
 
 ```
 03-fsdp-pytorch-ray-deepspeed/
-├── README.md                          # This file
-├── FSDP2_RayTrain_Tutorial.ipynb     # FSDP2 tutorial notebook
-├── DeepSpeed_RayTrain_Tutorial.ipynb # DeepSpeed tutorial notebook
-├── images/                            # Memory profiling images
+├── README.md                           # This file
+├── FSDP2_RayTrain_Tutorial.ipynb       # FSDP2 full tutorial
+├── FSDP2_RayTrain_Tutorial_LIVE.ipynb  # FSDP2 streamlined workshop notebook
+├── DeepSpeed_RayTrain_Tutorial.ipynb   # DeepSpeed full tutorial
+├── DeepSpeed_RayTrain_Tutorial_LIVE.ipynb  # DeepSpeed streamlined workshop notebook
+├── ds_config.json                      # Example DeepSpeed ZeRO config (used in LIVE)
+├── images/                             # Memory profiling images (if present)
 │   ├── all_strategies_profile.png
 │   ├── cpu_offload_profile.png
 │   ├── gpu_memory_profile.png
 │   ├── mixed_precision_profile.png
 │   └── reshard_after_forward_memory_profile.png
-└── .venv/                            # Virtual environment (created by user)
+└── .venv/                              # Virtual environment (created by user)
 ```
 
